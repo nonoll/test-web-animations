@@ -239,7 +239,24 @@
 
       // TweenLite.defaultEase = Power1.easeInOut;
 
-      var cloudIntro = function () {
+
+      const valueToMatrix = (el, values = {}) => {
+        // matrix(scaleX(), skewY(), skewX(), scaleY(), translateX(), translateY());
+        // matrix(1, 0, 0, 1, 0, 0)
+        const defaultValues = {
+          scaleX: 1,
+          skewY: 0,
+          skewX: 0,
+          scaleY: 1,
+          left: el.getBoundingClientRect().left,
+          top: el.getBoundingClientRect().top,
+        };
+        const { scaleX, skewY, skewX, scaleY, left, top } = Object.assign({}, defaultValues, values);
+        return `matrix(${scaleX}, ${skewY}, ${skewX}, ${scaleY}, ${left}, ${top})`;
+      }
+
+
+      const cloudIntro = () => {
         // TweenLite.to($('.cloud1'), 20, {
         //   x: WIDTH * 2,
         //   y: 300 * scale,
@@ -249,7 +266,8 @@
         // });
         const elCloud1 = document.querySelector('.cloud1');
         elCloud1.animate({
-          transform: `translate3D(${WIDTH * 2}px, ${300 * scale}px, 0)`,
+          // transform: `translate3D(${WIDTH * 2}px, ${300 * scale}px, 0)`,
+          transform: valueToMatrix(elCloud1, { left: WIDTH * 2, top: 300 * scale }),
           opacity: 0.3
         }, {
           easing: 'linear',
@@ -265,7 +283,8 @@
         // });
         const elCloudShadow1 = document.querySelector('.cloud-shadow1');
         elCloudShadow1.animate({
-          transform: `translate3D(${WIDTH * 2 + 50 * scale}px, ${450 * scale}px, 0)`,
+          // transform: `translate3D(${WIDTH * 2 + 50 * scale}px, ${450 * scale}px, 0)`,
+          transform: valueToMatrix(elCloudShadow1, { left: WIDTH * 2 + 50 * scale, top: 450 * scale }),
           opacity: 0.2
         }, {
           easing: 'linear',
@@ -407,10 +426,12 @@
         const rotationZ = Math.round(Math.random() * 60) - 30;
         const scaleX = Math.random() > 0.5 ? 1 : -1;
         el.animate([
-          { transform: `translate3D(0px, 0px, 0) rotateZ(${rotationZ}deg)` },
-          { transform: `translate3D(${WIDTH * 2}px, ${y}px, 0) scale(${scaleX}, 1) rotateZ(${rotationZ}deg)` }
+          { transform: `translate3D(0px, 0px, 0)` },
+          { transform: `translate3D(${WIDTH * 2}px, ${y}px, 0) scale(${scaleX}, 1)` }
         ], {
+          // composite: 'add',
           fill: 'forwards',
+          direction: 'alternate',
           easing: 'linear',
           duration: 1000 * 40
         }).addEventListener('finish', () => cloudBgFinishRepeat(el));
@@ -494,46 +515,70 @@
       // ]);
 
       const elTreehouse = document.querySelector('.treehouse');
-      elTreehouse.animate([
-        {
-          transform: 'rotateZ(-5deg), translate3D(20px, 4px, 0)'
-        },
-        {
-          delay: 0,
-          duration: 1000,
-          transform: 'rotateZ(10deg)'
-        },
-        {
-          delay: 1000,
-          duration: 1000,
-          transform: 'rotateZ(-5deg)'
-        },
-        {
-          delay: 1000 * 2,
-          duration: 1000,
-          transform: 'rotateZ(10deg)'
-        },
-        {
-          delay: 1000 * 3,
-          duration: 1000,
-          transform: 'rotateZ(-5deg)'
-        },
-        {
-          delay: 1000 * 0.2,
-          duration: 1000 * 0.4,
-          transform: 'translate3D(-5px, -2px, 0)'
-        },
-        {
-          delay: 1000 * 0.8,
-          duration: 1000 * 3.2,
-          transform: 'translate3D(20px, 4px, 0)'
-        }
-      ], {
-        fill: 'both',
-        delay: 1000 * 1.4,
-        duration: 1000,
-        iterations: Infinity
-      });
+      const addTreeAni = async (transform, { delay = 0, duration = 0 }) => {
+        return new Promise(resolve => {
+          elTreehouse.animate([
+            transform
+          ], {
+            // fill: 'both',
+            // composite: 'add',
+            fill: 'forwards',
+            direction: 'alternate',
+            delay: 1000 * delay,
+            duration: 1000 * duration,
+            iterations: Infinity,
+            // iterationComposite: 'accumulate'
+          }).addEventListener('finish', () => {
+            resolve();
+          });
+        })
+      }
+
+      const loopAni = () => {
+        addTreeAni({ transform: 'rotateZ(-5deg) translate3d(4px, 20px, 0)' }, {});
+        addTreeAni({ transform: 'rotateZ(10deg) translate3d(4px, 20px, 0)' }, { duration: 1 });
+        addTreeAni({ transform: 'rotateZ(-5deg) translate3d(4px, 20px, 0)' }, { delay: 1, duration: 1 });
+        addTreeAni({ transform: 'rotateZ(10deg) translate3d(4px, 20px, 0)' }, { delay: 2, duration: 1 });
+        addTreeAni({ transform: 'rotateZ(-5deg) translate3d(4px, 20px, 0)' }, { delay: 3, duration: 1 });
+        addTreeAni({ transform: 'rotateZ(-5deg) translate3d(-2px, -5px, 0)' }, { delay: 0.2, duration: 0.4 });
+        addTreeAni({ transform: 'rotateZ(-5deg) translate3d(4px, 20px, 0)' }, { delay: 0.8, duration: 3.2 });
+        // loopAni();
+      }
+
+      loopAni();
+
+      // elTreehouse.animate([
+      //   {
+      //     transform: 'rotateZ(-5deg) translate3d(4px, 20px, 0)'
+      //   },
+      //   {
+      //     transform: 'rotateZ(10deg) translate3d(4px, 20px, 0)'
+      //   },
+      //   {
+      //     transform: 'rotateZ(-5deg) translate3d(4px, 20px, 0)'
+      //   },
+      //   {
+      //     transform: 'rotateZ(10deg) translate3d(4px, 20px, 0)'
+      //   },
+      //   {
+      //     transform: 'rotateZ(-5deg) translate3d(4px, 20px, 0)'
+      //   },
+      //   {
+      //     transform: 'rotateZ(-5deg) translate3d(-5px, -2px, 0)'
+      //   },
+      //   {
+      //     transform: 'rotateZ(-5deg) translate3d(4px, 20px, 0)'
+      //   }
+      // ], {
+      //   // fill: 'forwards',
+      //   // composite: 'add',
+      //   fill: 'forwards',
+      //   composite: 'add',
+      //   direction: 'alternate',
+      //   // delay: 1000 * 1.4,
+      //   duration: 1000 * 3,
+      //   iterations: Infinity
+      // });
 
     })();
   </script>
